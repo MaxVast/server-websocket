@@ -2,10 +2,12 @@ use actix::Actor;
 use actix_web::{web, App, HttpServer};
 use std::sync::{Arc, Mutex};
 
+mod api;
 mod message;
 mod server;
 mod state;
 
+use api::handler::config;
 use server::web_socket::ws_index;
 use state::app_state::AppState;
 
@@ -25,9 +27,10 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(app_state.clone()))
             .route("/ws/", web::get().to(ws_index))
+            .configure(config)
     })
     .workers(2)
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
