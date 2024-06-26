@@ -28,7 +28,6 @@ impl Actor for MyWs {
             .send(RegisterClient { addr: addr.clone() })
             .into_actor(self)
             .then(|_, act, ctx| {
-                ctx.text("Welcome! You are connected.");
                 act.app_state
                     .send(GetBroadcastMessage)
                     .into_actor(act)
@@ -67,7 +66,7 @@ impl Handler<BroadcastMessage> for MyWs {
         // Create the broadcast message
         let broadcast_msg = BroadcastMessage {
             message: msg.message.clone(),
-            created_at: msg.created_at
+            created_at: msg.created_at,
         };
 
         // Create the response struct
