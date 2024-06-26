@@ -1,8 +1,9 @@
 use actix::Addr;
 use actix_web::{web, Error, HttpResponse};
+use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::message::message::BroadcastMessage;
+use crate::server::message::BroadcastMessage;
 use crate::state::app_state::AppState;
 // Deserialize incoming message payload
 #[derive(Deserialize)]
@@ -11,10 +12,10 @@ struct MessagePayload {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GenericResponse {
+pub struct GenericResponse<T> {
     pub status: String,
     pub message: String,
-    pub value: String,
+    pub value: Vec<T>,
 }
 
 // Endpoint to send message
@@ -22,15 +23,18 @@ async fn send_message(
     data: web::Data<Addr<AppState>>,
     msg: web::Json<MessagePayload>,
 ) -> Result<HttpResponse, Error> {
-    data.do_send(BroadcastMessage {
-        message: msg.message.clone(),
-    });
-    let response_json = GenericResponse {
-        status: "success".to_string(),
-        message: "Message sent and broadcasted".to_string(),
-        value: msg.message.to_string(),
+    let broadcast_message = BroadcastMessage {
+        message: msg.message.to_string(),
+        created_at: Utc::now(),
     };
-    Ok(HttpResponse::Ok().json(response_json))
+    data.do_send(broadcast_message.clone());
+    let response_json = GenericResponse {
+        status: "created".to_string(),
+        message: "Message sent and broadcasted".to_string(),
+        value: vec![broadcast_message],
+    };
+
+    Ok(HttpResponse::Created().json(response_json))
 }
 
 // fallback route

@@ -1,9 +1,11 @@
+use crate::api::handler::GenericResponse;
 use actix::prelude::*;
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
+use chrono::Utc;
 
-use crate::message::message::{
-    BroadcastMessage, GetState, RegisterClient, UnregisterClient, WsMessage,
+use crate::server::message::{
+    BroadcastMessage, GetBroadcastMessage, RegisterClient, UnregisterClient,
 };
 use crate::state::app_state::AppState;
 
@@ -28,11 +30,18 @@ impl Actor for MyWs {
             .then(|_, act, ctx| {
                 ctx.text("Welcome! You are connected.");
                 act.app_state
-                    .send(GetState)
+                    .send(GetBroadcastMessage)
                     .into_actor(act)
                     .then(|res, _, ctx| {
                         if let Ok(state) = res {
-                            ctx.text(state);
+                            let response_json = GenericResponse {
+                                status: "success".to_string(),
+                                message: "Message broadcasted".to_string(),
+                                value: vec![state],
+                            };
+                            let json_msg = serde_json::to_string(&response_json).unwrap();
+
+                            ctx.text(json_msg);
                         }
                         fut::ready(())
                     })
@@ -51,11 +60,28 @@ impl Actor for MyWs {
     }
 }
 
-impl Handler<WsMessage> for MyWs {
+impl Handler<BroadcastMessage> for MyWs {
     type Result = ();
 
-    fn handle(&mut self, msg: WsMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
+    fn handle(&mut self, msg: BroadcastMessage, ctx: &mut Self::Context) {
+        // Create the broadcast message
+        let broadcast_msg = BroadcastMessage {
+            message: msg.message.clone(),
+            created_at: msg.created_at
+        };
+
+        // Create the response struct
+        let response_json = GenericResponse {
+            status: "success".to_string(),
+            message: "Message broadcasted".to_string(),
+            value: vec![broadcast_msg],
+        };
+
+        // Serialize the response to JSON
+        if let Ok(json_msg) = serde_json::to_string(&response_json) {
+            // Send the JSON response back to the client
+            ctx.text(json_msg);
+        }
     }
 }
 
@@ -64,8 +90,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
         match msg {
             Ok(ws::Message::Text(text)) => {
                 let new_value = text.to_string();
-                self.app_state
-                    .do_send(BroadcastMessage { message: new_value });
+                let broadcast_msg = BroadcastMessage {
+                    message: new_value.clone(),
+                    created_at: Utc::now(),
+                };
+                self.app_state.do_send(broadcast_msg.clone());
+                let response_json = GenericResponse {
+                    status: "created".to_string(),
+                    message: "Message sent and broadcasted".to_string(),
+                    value: vec![broadcast_msg],
+                };
+                let json_msg = serde_json::to_string(&response_json).unwrap();
+
+                ctx.text(json_msg);
             }
             Ok(ws::Message::Close(_)) => {
                 self.app_state.do_send(UnregisterClient {

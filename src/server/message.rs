@@ -1,4 +1,6 @@
 use actix::prelude::*;
+use chrono::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::server::web_socket::MyWs;
 
@@ -17,23 +19,19 @@ pub struct UnregisterClient {
 impl Message for UnregisterClient {
     type Result = ();
 }
-
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct BroadcastMessage {
     pub message: String,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub created_at: DateTime<Utc>,
 }
 
 impl Message for BroadcastMessage {
     type Result = ();
 }
 
-pub struct GetState;
+pub struct GetBroadcastMessage;
 
-impl Message for GetState {
-    type Result = String;
-}
-
-pub struct WsMessage(pub String);
-
-impl Message for WsMessage {
-    type Result = ();
+impl Message for GetBroadcastMessage {
+    type Result = BroadcastMessage;
 }

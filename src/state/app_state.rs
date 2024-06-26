@@ -1,21 +1,21 @@
 use actix::prelude::*;
 use std::sync::{Arc, Mutex};
 
-use crate::message::message::{
-    BroadcastMessage, GetState, RegisterClient, UnregisterClient, WsMessage,
+use crate::server::message::{
+    BroadcastMessage, GetBroadcastMessage, RegisterClient, UnregisterClient,
 };
 use crate::server::web_socket::MyWs;
 
 pub struct AppState {
     pub clients: Vec<Addr<MyWs>>,
-    pub state: Arc<Mutex<String>>,
+    pub broadcast_message: Arc<Mutex<BroadcastMessage>>,
 }
 
 impl AppState {
-    pub fn new(state: Arc<Mutex<String>>) -> Self {
+    pub fn new(broadcast_message: Arc<Mutex<BroadcastMessage>>) -> Self {
         AppState {
             clients: vec![],
-            state,
+            broadcast_message,
         }
     }
 }
@@ -45,19 +45,19 @@ impl Handler<BroadcastMessage> for AppState {
 
     fn handle(&mut self, msg: BroadcastMessage, _: &mut Context<Self>) {
         for client in &self.clients {
-            client.do_send(WsMessage(msg.message.clone()));
+            client.do_send(msg.clone());
         }
 
-        let mut state = self.state.lock().unwrap();
-        *state = msg.message;
+        let mut message = self.broadcast_message.lock().unwrap();
+        *message = msg;
     }
 }
 
-impl Handler<GetState> for AppState {
-    type Result = String;
+impl Handler<GetBroadcastMessage> for AppState {
+    type Result = MessageResult<GetBroadcastMessage>;
 
-    fn handle(&mut self, _: GetState, _: &mut Context<Self>) -> Self::Result {
-        let state = self.state.lock().unwrap();
-        state.clone()
+    fn handle(&mut self, _msg: GetBroadcastMessage, _ctx: &mut Self::Context) -> Self::Result {
+        let message = self.broadcast_message.lock().unwrap().clone();
+        MessageResult(message)
     }
 }
