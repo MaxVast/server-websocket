@@ -15,7 +15,16 @@ struct MessagePayload {
 pub struct GenericResponse<T> {
     pub status: String,
     pub message: String,
-    pub value: Vec<T>,
+    pub type_message: MessageType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<Vec<T>>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all = "lowercase")] // pour que les valeurs soient sérialisées en minuscules
+pub enum MessageType {
+    Text,
+    Image,
 }
 
 // Endpoint to send message
@@ -31,7 +40,8 @@ async fn send_message(
     let response_json = GenericResponse {
         status: "created".to_string(),
         message: "Message sent and broadcasted".to_string(),
-        value: vec![broadcast_message],
+        type_message: MessageType::Text,
+        value: vec![broadcast_message].into(),
     };
 
     Ok(HttpResponse::Created().json(response_json))

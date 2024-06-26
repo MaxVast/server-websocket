@@ -1,4 +1,4 @@
-use crate::api::handler::GenericResponse;
+use crate::api::handler::{GenericResponse, MessageType};
 use actix::prelude::*;
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
@@ -36,7 +36,8 @@ impl Actor for MyWs {
                             let response_json = GenericResponse {
                                 status: "success".to_string(),
                                 message: "Message broadcasted".to_string(),
-                                value: vec![state],
+                                type_message: MessageType::Text,
+                                value: vec![state].into(),
                             };
                             let json_msg = serde_json::to_string(&response_json).unwrap();
 
@@ -73,7 +74,8 @@ impl Handler<BroadcastMessage> for MyWs {
         let response_json = GenericResponse {
             status: "success".to_string(),
             message: "Message broadcasted".to_string(),
-            value: vec![broadcast_msg],
+            type_message: MessageType::Text,
+            value: vec![broadcast_msg].into(),
         };
 
         // Serialize the response to JSON
@@ -87,7 +89,7 @@ impl Handler<BroadcastMessage> for MyWs {
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
-            Ok(ws::Message::Text(text)) => {
+            /*Ok(ws::Message::Text(text)) => {
                 let new_value = text.to_string();
                 let broadcast_msg = BroadcastMessage {
                     message: new_value.clone(),
@@ -97,12 +99,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
                 let response_json = GenericResponse {
                     status: "created".to_string(),
                     message: "Message sent and broadcasted".to_string(),
+                    type_message: MessageType::Text,
                     value: vec![broadcast_msg],
                 };
                 let json_msg = serde_json::to_string(&response_json).unwrap();
 
                 ctx.text(json_msg);
-            }
+            }*/
             Ok(ws::Message::Close(_)) => {
                 self.app_state.do_send(UnregisterClient {
                     addr: ctx.address(),

@@ -1,4 +1,5 @@
 use actix::Actor;
+use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use chrono::Utc;
 use std::sync::{Arc, Mutex};
@@ -28,6 +29,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .app_data(web::Data::new(app_state.clone()))
             .route("/ws/", web::get().to(ws_index))
             .configure(config)
