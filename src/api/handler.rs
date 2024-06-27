@@ -133,6 +133,6 @@ async fn handler_404() -> HttpResponse {
 pub fn config(conf: &mut web::ServiceConfig) {
     conf.route("/send-message", web::post().to(send_message))
         .route("/upload-image", web::post().to(upload_image))
-        .service(Files::new("/uploads/img", "uploads/img").show_files_listing())
-        .default_service(web::to(handler_404));
+        .service(Files::new("/uploads/img", "uploads/img").show_files_listing());
+        //.default_service(web::to(handler_404));
 }
