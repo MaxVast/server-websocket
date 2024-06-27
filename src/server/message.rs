@@ -1,3 +1,4 @@
+use crate::api::handler::MessageType;
 use actix::prelude::*;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,7 @@ impl Message for UnregisterClient {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct BroadcastMessage {
     pub message: String,
+    pub type_message: MessageType,
     #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: DateTime<Utc>,
 }
