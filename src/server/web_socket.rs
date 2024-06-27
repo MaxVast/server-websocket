@@ -1,8 +1,7 @@
-use crate::api::handler::{GenericResponse, MessageType};
+use crate::api::handler::GenericResponse;
 use actix::prelude::*;
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
-use chrono::Utc;
 
 use crate::server::message::{
     BroadcastMessage, GetBroadcastMessage, RegisterClient, UnregisterClient,
@@ -36,7 +35,6 @@ impl Actor for MyWs {
                             let response_json = GenericResponse {
                                 status: "success".to_string(),
                                 message: "Message broadcasted".to_string(),
-                                type_message: MessageType::Text,
                                 value: vec![state].into(),
                             };
                             let json_msg = serde_json::to_string(&response_json).unwrap();
@@ -67,6 +65,7 @@ impl Handler<BroadcastMessage> for MyWs {
         // Create the broadcast message
         let broadcast_msg = BroadcastMessage {
             message: msg.message.clone(),
+            type_message: msg.type_message.clone(),
             created_at: msg.created_at,
         };
 
@@ -74,7 +73,6 @@ impl Handler<BroadcastMessage> for MyWs {
         let response_json = GenericResponse {
             status: "success".to_string(),
             message: "Message broadcasted".to_string(),
-            type_message: MessageType::Text,
             value: vec![broadcast_msg].into(),
         };
 
