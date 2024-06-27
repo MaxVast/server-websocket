@@ -8,6 +8,7 @@ mod api;
 mod server;
 mod state;
 
+use crate::api::handler::MessageType;
 use crate::server::message::BroadcastMessage;
 use api::handler::config;
 use server::web_socket::ws_index;
@@ -22,6 +23,7 @@ async fn main() -> std::io::Result<()> {
     println!("✅ Server started successfully");
     let broadcast_message = BroadcastMessage {
         message: "Hello world, welcome to Syneido !".to_string(),
+        type_message: MessageType::Text,
         created_at: Utc::now(),
     };
     let state = Arc::new(Mutex::new(broadcast_message));
