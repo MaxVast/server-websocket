@@ -1,17 +1,17 @@
 use actix::Addr;
 use actix_files::Files;
 use actix_multipart::Multipart;
+use actix_web::http::StatusCode;
 use actix_web::{web, Error, HttpResponse};
 use chrono::prelude::*;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::{fs::File, io::Write, path::Path};
 use uuid::Uuid;
 
 use crate::server::message::BroadcastMessage;
 use crate::state::app_state::AppState;
-// Deserialize incoming message payload
+
 #[derive(Deserialize)]
 struct MessagePayload {
     message: String,
@@ -26,7 +26,7 @@ pub struct GenericResponse<T> {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[serde(rename_all = "lowercase")] // pour que les valeurs soient sérialisées en minuscules
+#[serde(rename_all = "lowercase")]
 pub enum MessageType {
     Text,
     Image,
@@ -53,18 +53,27 @@ async fn send_message(
     Ok(HttpResponse::Created().json(response_json))
 }
 
+fn check_file_is_uploaded(filename: &str) -> Result<(), Error> {
+    //Check if file is uploaded
+    if filename.is_empty() {
+        let response_json = GenericResponse {
+            status: "Bad request".to_string(),
+            message: "No file found...".to_string(),
+            value: vec![{}].into(),
+        };
+        return Err(actix_web::error::InternalError::from_response(
+            StatusCode::BAD_REQUEST,
+            HttpResponse::BadRequest().json(response_json),
+        )
+        .into());
+    }
+    Ok(())
+}
+
 async fn upload_image(
     data: web::Data<Addr<AppState>>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, Error> {
-    // Get the upload folder
-    let upload_dir = env::current_dir().unwrap().join("uploads/img");
-
-    // Create the upload folder if doesnt exist
-    if !upload_dir.exists() {
-        std::fs::create_dir(&upload_dir).unwrap();
-    }
-
     // Generate an Uuid before each loop
     let id = Uuid::new_v4();
 
@@ -78,14 +87,7 @@ async fn upload_image(
                 let filename = content_disposition.get_filename().unwrap_or("unknown");
 
                 //Check if file is uploaded
-                if filename.len() == 0 {
-                    let _response_json = GenericResponse {
-                        status: "Bad request".to_string(),
-                        message: "No file found...".to_string(),
-                        value: vec![{}].into(),
-                    };
-                    return Ok(HttpResponse::BadRequest().json(_response_json));
-                }
+                check_file_is_uploaded(filename)?;
 
                 // Check if the file has .jpg, .png, or .webp extension
                 let file_extension = Path::new(filename)
@@ -123,7 +125,7 @@ async fn upload_image(
         }
     }
     // Send the file path to WebSocket clients
-    let file_path_str = format!("/{}", file_path.to_string());
+    let file_path_str = format!("/{}", file_path);
 
     let broadcast_message = BroadcastMessage {
         message: file_path_str.to_string(),
@@ -145,14 +147,6 @@ async fn upload_video(
     data: web::Data<Addr<AppState>>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, Error> {
-    // Get the upload folder
-    let upload_dir = env::current_dir().unwrap().join("uploads/video");
-
-    // Create the upload folder if doesnt exist
-    if !upload_dir.exists() {
-        std::fs::create_dir(&upload_dir).unwrap();
-    }
-
     // Generate an Uuid before each loop
     let id = Uuid::new_v4();
 
@@ -166,14 +160,7 @@ async fn upload_video(
                 let filename = content_disposition.get_filename().unwrap_or("unknown");
 
                 //Check if file is uploaded
-                if filename.len() == 0 {
-                    let _response_json = GenericResponse {
-                        status: "Bad request".to_string(),
-                        message: "No file found...".to_string(),
-                        value: vec![{}].into(),
-                    };
-                    return Ok(HttpResponse::BadRequest().json(_response_json));
-                }
+                check_file_is_uploaded(filename)?;
 
                 // Check if the file has .mp4 extension
                 let file_extension = Path::new(filename)
@@ -208,7 +195,7 @@ async fn upload_video(
         }
     }
     // Send the file path to WebSocket clients
-    let file_path_str = format!("/{}", file_path.to_string());
+    let file_path_str = format!("/{}", file_path);
 
     let broadcast_message = BroadcastMessage {
         message: file_path_str.to_string(),
