@@ -46,7 +46,13 @@ where
     }
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        if req.uri().path().starts_with("/ws/") {
+        let path = req.path();
+
+        // Exclude routes
+        if path.starts_with("/ws/")
+            || path.starts_with("/uploads/video/")
+            || path.starts_with("/uploads/img/")
+        {
             return Either::Left(self.service.call(req));
         }
 
