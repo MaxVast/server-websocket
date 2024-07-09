@@ -60,7 +60,7 @@ async fn main() -> std::io::Result<()> {
         let cors = Cors::default()
             .allowed_origin("http://localhost:3000")
             .allowed_origin("http://localhost:3000/")
-            .allowed_methods(vec!["GET"])
+            .allowed_methods(vec!["GET", "POST"])  // Ajout de POST si nécessaire
             .allowed_headers(vec![
                 header::CONTENT_TYPE,
                 header::AUTHORIZATION,

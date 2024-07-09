@@ -1,12 +1,13 @@
 use actix::Addr;
-use actix_files::Files;
+use actix_files::{Files, NamedFile};
 use actix_multipart::Multipart;
 use actix_web::http::StatusCode;
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{web, Error, HttpResponse, HttpRequest};
 use chrono::prelude::*;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Write, path::Path};
+use std::path::PathBuf;
 use uuid::Uuid;
 
 use crate::server::message::BroadcastMessage;
@@ -213,6 +214,13 @@ async fn upload_video(
     Ok(HttpResponse::Created().json(response_json))
 }
 
+async fn serve_video(req: HttpRequest) -> Result<HttpResponse, Error> {
+    let filename: String = req.match_info().query("filename").to_string();
+    let path: PathBuf = format!("./uploads/video/{}", filename).parse().unwrap();
+    let file = NamedFile::open(path)?;
+    Ok(file.into_response(&req).map_into_boxed_body())
+}
+
 // fallback route
 async fn handler_404() -> HttpResponse {
     HttpResponse::NotFound().body("404 : Nothing here..")
@@ -223,7 +231,7 @@ pub fn config(conf: &mut web::ServiceConfig) {
     conf.route("/send-message", web::post().to(send_message))
         .route("/upload-image", web::post().to(upload_image))
         .route("/upload-video", web::post().to(upload_video))
+        .route("/uploads/video/{filename}", web::get().to(serve_video))
         .service(Files::new("/uploads/img", "uploads/img").show_files_listing())
-        .service(Files::new("/uploads/video", "uploads/video").show_files_listing())
         .default_service(web::to(handler_404));
 }
