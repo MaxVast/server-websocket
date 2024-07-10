@@ -1,2 +1,11 @@
 /target
 /uploads
+cert.pem
+key.pem
+server.csr
+server.crt
+server.key
+ca.crt
+ca.key
+ca.srl
+.idea

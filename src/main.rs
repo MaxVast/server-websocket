@@ -83,8 +83,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:3000")
-            .allowed_origin("http://localhost:3000/")
+            .allow_any_origin()
             .allowed_methods(vec!["GET", "POST"]) // Ajout de POST si nécessaire
             .allowed_headers(vec![
                 header::CONTENT_TYPE,
@@ -101,8 +100,8 @@ async fn main() -> std::io::Result<()> {
             .route("/ws/", web::get().to(ws_index))
             .configure(config)
     })
-    .workers(2)
-    .bind_rustls_0_23(("127.0.0.1", 8443), tls_config)?
-    .run()
-    .await
+        .workers(2)
+        .bind_rustls_0_23(("127.0.0.1", 8443), tls_config)?
+        .run()
+        .await
 }
