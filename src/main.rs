@@ -101,7 +101,7 @@ async fn main() -> std::io::Result<()> {
             .configure(config)
     })
         .workers(2)
-        .bind_rustls_0_23(("127.0.0.1", 8443), tls_config)?
+        .bind_rustls_0_23(("0.0.0.0", 8443), tls_config)?
         .run()
         .await
 }
