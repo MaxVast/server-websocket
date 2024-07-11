@@ -61,8 +61,8 @@ async fn main() -> std::io::Result<()> {
         .install_default()
         .unwrap();
 
-    let mut certs_file = BufReader::new(File::open("cert.pem").unwrap());
-    let mut key_file = BufReader::new(File::open("key.pem").unwrap());
+    let mut certs_file = BufReader::new(File::open("/etc/letsencrypt/live/server-websocket.syneidolab.com/fullchain.pem").unwrap());
+    let mut key_file = BufReader::new(File::open("/etc/letsencrypt/live/server-websocket.syneidolab.com/privkey.pem").unwrap());
 
     // load TLS certs and key
     // to create a self-signed temporary cert for testing:
