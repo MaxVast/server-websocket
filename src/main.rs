@@ -65,8 +65,6 @@ async fn main() -> std::io::Result<()> {
     let mut key_file = BufReader::new(File::open("/etc/letsencrypt/live/server-websocket.syneidolab.com/privkey.pem").unwrap());
 
     // load TLS certs and key
-    // to create a self-signed temporary cert for testing:
-    // `openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost'`
     let tls_certs = rustls_pemfile::certs(&mut certs_file)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
@@ -84,7 +82,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
-            .allowed_methods(vec!["GET", "POST"]) // Ajout de POST si nécessaire
+            .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![
                 header::CONTENT_TYPE,
                 header::AUTHORIZATION,
