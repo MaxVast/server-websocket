@@ -39,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: app-rust-server-websocket
-          path: target/release/server-websocket
+          path: target/release/server-ws
