@@ -86,32 +86,13 @@ impl Handler<BroadcastMessage> for MyWs {
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            /*Ok(ws::Message::Text(text)) => {
-                let new_value = text.to_string();
-                let broadcast_msg = BroadcastMessage {
-                    message: new_value.clone(),
-                    created_at: Utc::now(),
-                };
-                self.app_state.do_send(broadcast_msg.clone());
-                let response_json = GenericResponse {
-                    status: "created".to_string(),
-                    message: "Message sent and broadcasted".to_string(),
-                    type_message: MessageType::Text,
-                    value: vec![broadcast_msg],
-                };
-                let json_msg = serde_json::to_string(&response_json).unwrap();
-
-                ctx.text(json_msg);
-            }*/
-            Ok(ws::Message::Close(_)) => {
-                self.app_state.do_send(UnregisterClient {
-                    addr: ctx.address(),
-                });
-                ctx.stop();
-            }
-            _ => (),
+        if let Ok(ws::Message::Close(_)) = msg {
+            self.app_state.do_send(UnregisterClient {
+             addr: ctx.address(),
+            });
+            ctx.stop();
         }
+
     }
 }
 
