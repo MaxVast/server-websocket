@@ -1,0 +1,42 @@
+name: Rust CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - name: Cache Cargo registry
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Cargo build
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+      - name: Rust Linting and Formatting
+        run: |
+          cargo fmt 
+          cargo clippy --all-targets --all-features -- -D warnings
+      - name: Build release version
+        run: cargo build --release
+      #- name: Run tests
+      #  run: cargo test --all
+      - name: List files in target/release
+        run: ls -al target/release
+      - name: Save Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-rust-server-websocket
+          path: target/release/server-websocket
